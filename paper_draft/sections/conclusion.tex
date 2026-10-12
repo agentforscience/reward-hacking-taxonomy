@@ -1,0 +1,16 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We ran a small end-to-end \rlhf pipeline with dense checkpointing and applied one taxonomy, one reward model, two LLM judges, and a set of surface metrics to the same 10,560 responses.
+In this setup the hypothesis we started from is only partly right.
+Verbosity appears by 20\% of training, and the divergence between \rmodel score and judge preference becomes detectable around 40\%.
+But verbosity plus sycophancy is 49.9\% of reward-hacking instances under the primary judge, not above 60\%; sycophancy does not emerge; verbosity plateaus instead of rising monotonically; and format changes come first, not last.
+Fabrication is the failure mode most associated with responses that gain reward and lose the judge.
+
+The main takeaway is that the behavior a reward model most visibly rewards is not necessarily the behavior that makes responses worse: here length grew everywhere, and fabricated content marked the rejected responses.
+
+Several follow-ups would test how far this holds.
+Human labels on a few hundred instances would validate or replace the judge taxonomy, which is the main blocker for H1.
+A 3--7B policy trained with PPO and a higher token cap would show whether fabrication is specific to weak policies and whether the format-then-length ordering holds for other reward models.
+Varying the share of opinion-bearing training prompts and the \rmodel's training data would test when sycophancy emerges.
+More seeds and several run lengths would show whether onset times scale with steps, KL budget, or reward gained, and logit-based, order-averaged pairwise judging would remove position bias.

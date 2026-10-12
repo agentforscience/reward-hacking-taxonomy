@@ -1,0 +1,17 @@
+{
+ "seed": 99,
+ "beta": 0.05,
+ "lr": 5e-05,
+ "temp": 0.7,
+ "n_samples": 2,
+ "steps": 48,
+ "batch": 16,
+ "n_ckpt": 3,
+ "eval_limit": 2,
+ "max_new": 256,
+ "max_new_eval": 384,
+ "policy": "Qwen/Qwen2.5-0.5B-Instruct",
+ "chunk": 4,
+ "tag": "pilot_lr5e-5",
+ "no_eval": false
+}

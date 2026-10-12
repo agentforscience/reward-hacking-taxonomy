@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "stages": {
+    "resource_finder": {
+      "success": true,
+      "skipped": true
+    },
+    "experiment_runner": {
+      "success": true,
+      "return_code": 0,
+      "elapsed_time": 16540.69991660118,
+      "log_file": "/data/summereunann/neurico-workspaces/reward_hacking_taxonomy__class_20261012_130121_51329755/logs/execution_claude.log",
+      "transcript_file": "/data/summereunann/neurico-workspaces/reward_hacking_taxonomy__class_20261012_130121_51329755/logs/execution_claude_transcript.jsonl",
+      "background_processes_terminated": false
+    }
+  },
+  "work_dir": "/data/summereunann/neurico-workspaces/reward_hacking_taxonomy__class_20261012_130121_51329755"
+}

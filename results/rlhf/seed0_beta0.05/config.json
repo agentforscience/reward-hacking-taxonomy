@@ -1,0 +1,17 @@
+{
+ "seed": 0,
+ "beta": 0.05,
+ "lr": 3e-05,
+ "temp": 0.7,
+ "n_samples": 2,
+ "steps": 160,
+ "batch": 16,
+ "n_ckpt": 10,
+ "eval_limit": 0,
+ "max_new": 256,
+ "max_new_eval": 384,
+ "policy": "Qwen/Qwen2.5-0.5B-Instruct",
+ "chunk": 2,
+ "tag": null,
+ "no_eval": false
+}

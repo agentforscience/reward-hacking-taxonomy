@@ -1,0 +1,30 @@
+{
+  "created_at": "2026-10-12T18:01:32.958174Z",
+  "stages": {
+    "resource_finder": {
+      "status": "completed",
+      "completed_at": "2026-10-12T18:01:32.999225Z",
+      "success": true,
+      "outputs": {
+        "skipped": true
+      }
+    },
+    "experiment_runner": {
+      "status": "completed",
+      "started_at": "2026-10-12T18:01:33.009967Z",
+      "completed_at": "2026-10-12T22:37:13.849504Z",
+      "success": true,
+      "outputs": {
+        "success": true,
+        "return_code": 0,
+        "elapsed_time": 16540.69991660118,
+        "log_file": "/data/summereunann/neurico-workspaces/reward_hacking_taxonomy__class_20261012_130121_51329755/logs/execution_claude.log",
+        "transcript_file": "/data/summereunann/neurico-workspaces/reward_hacking_taxonomy__class_20261012_130121_51329755/logs/execution_claude_transcript.jsonl",
+        "background_processes_terminated": false
+      }
+    }
+  },
+  "current_stage": null,
+  "completed": true,
+  "completed_at": "2026-10-12T22:37:14.500931Z"
+}

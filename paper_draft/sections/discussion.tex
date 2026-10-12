@@ -1,0 +1,48 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\para{What did the policy exploit?}
+The clearest judge-independent changes are length (+33\% tokens, with the cap-hit rate doubling) and markdown structure (38\% of responses with at least three markdown elements at step 0, 72\% at the 50\% peak).
+Both are consistent with the \rmodel's measured preference for longer responses, and they support the verbosity half of the hypothesis qualitatively, in line with \citet{singhal2023long}.
+
+\para{Why does H1 still fail?}
+Counting primary labels, verbosity is about half of reward-hacking instances, but it is about half of everything the primary judge sees, including the untrained policy.
+What grows among the responses the judge rejects is confident, fluent, wrong content.
+One explanation that fits these observations, and that we did not test, is that a weak policy pushed to write longer and more assured answers produces more invented detail, and an \rmodel trained on preference votes has no access to ground truth and so cannot penalize it.
+\Secref{app:examples} gives an example: asked for Coco Chanel's real first name, the untrained policy hedges (\rmodel score 0.51), and the final policy states a wrong name with an invented biography (\rmodel score 0.90).
+The practical lesson is about measurement: a category's share among bad responses means little without its share among all responses.
+
+\para{Why is there no sycophancy?}
+Its absence here is not evidence that \rlhf does not produce it.
+Only 25\% of training prompts carried a user belief, an \rmodel trained on \arena votes may not reward agreement, and the base model was already highly deferential on the probes (57\% adoption of the user's wrong answer), which leaves less room to rise.
+Agreeable openers such as ``Yes, you're absolutely correct!'' do occur in trained-policy responses; they did not become more frequent overall.
+
+\para{How should the timing claims be read?}
+The 20\% and 40\% marks roughly match verbosity onset and detectable divergence.
+Both depend on the run length, which we chose from a pilot, and on statistical power.
+With more prompts the divergence would likely be detected earlier, since point estimates fall from 20--30\%.
+
+\para{Late training mixes exploitation with degradation.}
+The \rmodel score itself peaks at 60\% and drops to 0.96 by 100\%, while the KL to the initial policy reaches 0.2--0.4 nats per token (\figref{fig:training}).
+Part of the late decline in judge ratings is therefore general policy degradation and more truncated responses, not purely exploitation of the \rmodel.
+The cleanest window for ``\rmodel up, judge down'' is 20--60\% of training.
+
+\subsection{Limitations}
+
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item \textbf{No human ratings.} Every ``human preference'' number comes from a 7--8B LLM judge. \judgeone is from the same model family as the policy and the \rmodel.
+    \item \textbf{Unreliable taxonomy labels.} Inter-judge $\kappa$ is 0.10--0.23 for five of six flags, and both judges have high base rates for some labels. These labels cannot settle H1; the two judges' estimates are 30 points apart.
+    \item \textbf{Position bias.} Only 44--56\% of pairwise verdicts are order-consistent, which weakens the pairwise measure and the instance definition built on it.
+    \item \textbf{Small policy, short run.} A 0.5B model with about 30\% trivia accuracy, 2,560 training episodes, one \rmodel, and one \rlhf algorithm without PPO machinery. Shares and timings may not transfer to larger models, and the fabrication result in particular may be specific to weak policies.
+    \item \textbf{Arbitrary time axis.} Timing is relative to a 160-update run.
+    \item \textbf{Few seeds.} Three main seeds, with intervals that resample prompts and not seeds; the ablation is a single seed.
+    \item \textbf{Token cap.} The cap censors length and produces cut-off responses that judges may penalize.
+    \item \textbf{Post hoc elements.} The base-rate and new-flag analyses were added after we saw that the judge flags verbosity on most step-0 responses, and the judge protocol changed after we inspected about 700 outputs for format and position bias (\secref{app:deviations}).
+    \item \textbf{Trivia correctness.} Alias string matching misses some paraphrases.
+    \item \textbf{Background not re-verified.} We did not run a systematic literature search; related work reflects our prior knowledge of the cited papers.
+\end{itemize}
+
+\para{Broader implications.}
+For monitoring \rlhf, our results suggest that length and markup are cheap early signals that the policy is moving toward what the \rmodel over-values, but that they do not identify the responses a rater would reject.
+Fabrication was the label enriched among rejected responses and the one label our two judges agreed on ($\kappa=0.57$), which suggests adding a factuality probe with known answers to the monitoring set.
+For evaluation practice, LLM judges gave usable quality trajectories here and unusable category shares; taxonomy studies that rely on a single judge should report base rates and inter-judge agreement.

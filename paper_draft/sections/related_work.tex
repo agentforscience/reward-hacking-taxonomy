@@ -1,0 +1,25 @@
+\section{Related Work}
+\label{sec:related}
+
+\para{Reward hacking and over-optimization.}
+Optimizing a misspecified objective can produce behavior that scores well and is unwanted~\citep{amodei2016concrete}, and \citet{skalse2022defining} give a formal treatment of when a proxy reward can be hacked.
+In \rlhf~\citep{christiano2017deep,stiennon2020learning,ouyang2022training}, the proxy is a learned \rmodel.
+\citet{gao2023scaling} study how true reward first rises and then falls as a policy is optimized against a proxy reward model, and \citet{moskovitz2023confronting} propose constrained \rlhf to limit over-optimization of component reward models.
+\citet{casper2023open} survey the broader limitations of \rlhf.
+These works measure \emph{how much} the proxy and the target diverge.
+We ask \emph{what} the divergent responses look like, by labelling them with a taxonomy at each checkpoint.
+
+\para{Length bias.}
+\citet{singhal2023long} show that much of the reward gain in \rlhf is associated with longer outputs and that reward models correlate strongly with length.
+Our \rmodel reproduces this bias from human votes (it prefers the longer response in 71.1\% of held-out pairs), and our verbosity results are consistent with theirs.
+Unlike their work, we also ask whether longer responses are what a judge \emph{rejects}, and find that length grows across all responses while fabrication is what separates rejected ones.
+
+\para{Sycophancy.}
+\citet{perez2022discovering} use model-written evaluations to show that language models repeat users' stated views, and \citet{sharma2023towards} show that sycophancy is widespread across assistants and that human preference data sometimes favors responses that match a user's beliefs.
+We borrow the wrong-belief trivia probe design from \citet{sharma2023towards}.
+Unlike these works, we track sycophancy along an \rlhf trajectory, and in our setup it does not increase; we discuss why this absence is weak evidence in \secref{sec:discussion}.
+
+\para{LLM judges.}
+LLM judges are a common stand-in for human raters, with known position and verbosity biases~\citep{zheng2023judging,wang2023large}.
+We rely on LLM judges because we have no human raters, and we therefore measure their reliability directly: position bias, order consistency, agreement between two judge families, and agreement with judge-free surface metrics.
+These checks limit which of our conclusions can be trusted, and we report them as results.

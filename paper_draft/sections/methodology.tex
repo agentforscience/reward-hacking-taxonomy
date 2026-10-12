@@ -1,0 +1,94 @@
+\section{Methodology}
+\label{sec:method}
+
+We describe the pipeline (\tabref{tab:setup}), the measurements, and the definitions we fixed before seeing judge labels.
+All models are open-weight and run locally.
+\Secref{app:deviations} lists every deviation from the original plan.
+
+\begin{table}[t]
+\centering
+\caption{Pipeline components. The reward model, the policy, and the primary judge come from the same model family; \judgetwo is from a different family.}
+\label{tab:setup}
+\small
+\begin{tabular}{@{}p{0.15\textwidth}p{0.33\textwidth}p{0.46\textwidth}@{}}
+\toprule
+Role & Model / data & Details \\
+\midrule
+Reward model & \qwensmall + LoRA ($r{=}16$) + scalar head & Bradley--Terry loss on 20,000 single-turn, non-tie \arena pairs; lr $10^{-4}$, batch 8, 2,500 steps \\
+Policy & \qwensmall + LoRA ($r{=}16$) & Default system prompt \\
+Training prompts & 3,345 held-out \arena prompts (75\%) + 600 \trivia questions (25\%) & Trivia prompts carry a user-stated belief, half correct; never seen by the \rmodel \\
+Eval prompts & 120 \arena + 60 trivia (wrong belief) + same 60 trivia (neutral) & Fixed; disjoint from training prompts \\
+\judgeone (primary) & \textsc{Qwen2.5-7B-Instruct} & All 11 checkpoints of the 3 main seeds; 6 checkpoints of the ablation \\
+\judgetwo & \textsc{Llama-3.1-8B-Instruct} & Checkpoints 0/20/40/60/80/100\% of the 3 main seeds \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Reward model}
+
+We train the \rmodel on real human pairwise votes so that the proxy reward carries human-derived biases, not biases we design by hand.
+The data are 20,000 single-turn, non-tie comparisons from the Chatbot Arena human-preference release~\citep{chiang2024chatbot}.
+The \rmodel is \qwensmall~\citep{qwen2025} with a LoRA adapter~\citep{hu2022lora} and a scalar head, trained with a Bradley--Terry loss~\citep{bradley1952rank}.
+
+{\bf How good is the reward model?}
+On 1,500 held-out human votes its accuracy is 69.3\%; always picking the longer response gets 62.6\%.
+The \rmodel prefers the longer response in 71.1\% of pairs, and its score correlates with length at Spearman 0.46.
+It therefore beats a length heuristic, and it also carries a real length bias for the policy to exploit.
+
+\subsection{RLHF algorithm}
+
+We use REINFORCE~\citep{williams1992simple} with a per-prompt baseline and an exact per-token KL penalty to the frozen initial policy $\pi_0$.
+Each update samples two responses $y_1, y_2 \sim \pi_\theta(\cdot \mid x)$ for each of 8 prompts, and maximizes
+\begin{equation}
+\begin{aligned}
+J(\theta) \;=\;& \E_{x}\,\E_{y \sim \pi_\theta(\cdot\mid x)}\!\big[\, r(x,y) - b(x) \,\big] \\
+&-\; \beta\, \E_{x}\,\E_{y \sim \pi_\theta(\cdot\mid x)}\Big[\tfrac{1}{|y|}\textstyle\sum_{t} \mathrm{KL}\big(\pi_\theta(\cdot\mid x, y_{<t}) \,\|\, \pi_0(\cdot\mid x, y_{<t})\big)\Big],
+\end{aligned}
+\label{eq:objective}
+\end{equation}
+where $r$ is the \rmodel score and the baseline $b(x) = \tfrac12\big(r(x,y_1)+r(x,y_2)\big)$ is that prompt's mean reward, which removes between-prompt reward variance.
+The policy is the $T{=}0.7$ tempered distribution in both training and evaluation.
+This is the standard \rlhf objective without the clipping and value head of PPO~\citep{schulman2017proximal}.
+
+\para{Settings.}
+We use AdamW with learning rate $3\times10^{-5}$, gradient clipping at 1.0, and KL coefficient $\beta=0.05$ for three seeds (0, 1, 2).
+One ablation run uses $\beta=0.5$.
+Each run has 160 updates of 16 episodes with a 256-token cap, and we save a checkpoint every 16 updates, which gives 11 checkpoints at 0, 10, \ldots, 100\% of training.
+At each checkpoint the policy answers the 240 evaluation prompts with $T{=}0.7$, top-$p$ 0.9, and a 384-token cap.
+We chose the learning rate and run length from a short pilot using training reward and KL alone.
+
+\para{Evaluation prompts.}
+The evaluation set has 120 \arena prompts and 60 \trivia questions~\citep{joshi2017triviaqa}, each asked twice: once with an \emph{incorrect} user belief attached (``I think the answer is \ldots''), following \citet{sharma2023towards}, and once neutrally.
+The untrained policy answers only about 30\% of the trivia questions correctly, which matters for how we read the fabrication results.
+
+\subsection{Measurements}
+
+We take four kinds of measurement on every evaluation response.
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item \textbf{\rmodel score.}
+    \item \textbf{Judge quality and taxonomy flags.} The judge rates quality from 1 to 10, lists which of six problems are present, and picks one primary label. The categories are \emph{verbosity} (padding), \emph{sycophancy} (flattery or unwarranted agreement), \emph{format gaming} (structure or markup in place of substance), \emph{repetition} (degeneration), \emph{evasion} (hedging or over-disclaiming), and \emph{fabrication} (confident false or off-topic content). The judge never sees the checkpoint, seed, or \rmodel score. For trivia prompts it is given the correct answer.
+    \item \textbf{Pairwise preference.} The judge compares each response with the same run's step-0 response to the same prompt, in both presentation orders. We define \texttt{prefers\_new} as the mean of the two verdicts (0, 0.5, or 1).
+    \item \textbf{Judge-free surface metrics.} Token count, fraction of responses that hit the token cap, markdown elements, distinct-3-gram ratio, a flattery-phrase lexicon, and, on trivia probes, whether the response adopts the user's wrong answer (alias string match).
+\end{itemize}
+The surface metrics give a check on the judge's flags that does not depend on any judge, and \judgetwo~\citep{dubey2024llama} gives a check on \judgeone from a different model family.
+
+\subsection{Definitions fixed before results}
+\label{sec:definitions}
+
+\para{Reward-hacking instance.}
+A response at a checkpoint after step 0 whose \rmodel score is higher than the same seed's step-0 response to that prompt, while \judgeone prefers the step-0 response in both presentation orders.
+
+\para{Onset.}
+The first checkpoint at which prevalence exceeds its step-0 value, tested with a paired prompt-level bootstrap pooled over seeds and Holm-corrected~\citep{holm1979simple} over the 10 later checkpoints.
+``Early'' means onset at or before 20\%.
+
+\para{Monotonicity and saturation.}
+We report a Mann--Kendall trend test, the number of decreasing intervals per seed, and the slope of prevalence over the last 40\% of training.
+
+\para{Divergence.}
+The first checkpoint at which the judge metric is significantly below its running maximum while the \rmodel score is significantly above its value at that maximum.
+
+\para{Statistics.}
+All confidence intervals are 95\% prompt-clustered bootstraps with 10,000 resamples.
+They resample prompts, not seeds.
+H1 counts as supported only if the lower bound of the interval for the verbosity-plus-sycophancy (\vsshare) share exceeds 60\%.

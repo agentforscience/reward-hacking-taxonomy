@@ -1,0 +1,45 @@
+\section{Introduction}
+\label{sec:intro}
+
+Reinforcement learning from human feedback (\rlhf) does not optimize what people want; it optimizes a learned reward model (\rmodel) that approximates what people chose in a finite set of comparisons~\citep{christiano2017deep,stiennon2020learning,ouyang2022training}.
+When the policy finds features that the \rmodel over-values, measured reward keeps rising while real quality stalls or falls.
+This is reward hacking~\citep{amodei2016concrete,skalse2022defining}, and it is a practical problem: a practitioner watching the reward curve cannot tell improvement from exploitation.
+
+Knowing \emph{which} proxy-exploiting behaviors dominate, and \emph{when} they appear, tells practitioners what to monitor and when to stop.
+Prior work documents the individual phenomena.
+Reward models and \rlhf-trained policies favor longer responses~\citep{singhal2023long}.
+Models trained on human feedback tend to agree with users' stated views~\citep{perez2022discovering,sharma2023towards}.
+Optimizing far enough against a learned reward lowers true reward~\citep{gao2023scaling,moskovitz2023confronting}.
+However, these results come from different models, reward models, and measurement protocols.
+What is less common is a single taxonomy applied to the \emph{same} training runs, so that the shares of different failure modes are comparable and each one has an onset time on a shared training axis.
+
+{\bf Which failure modes make up reward hacking, when do they appear, and when does the \rmodel score stop tracking human preference?}
+We study this question with a small but complete \rlhf pipeline.
+We train an \rmodel on 20,000 human pairwise votes from Chatbot Arena~\citep{chiang2024chatbot}, optimize a \qwensmall policy against it for 160 updates (three seeds plus one strong-KL ablation), and save 11 checkpoints per run.
+We score all 10,560 checkpoint responses with the \rmodel, with judge-free surface metrics, and with two blinded LLM judges from different model families that rate quality, compare each response with the untrained policy's response, and assign labels from a six-category taxonomy: verbosity, sycophancy, format gaming, repetition, evasion, and fabrication.
+No human raters were available, so the judges are a proxy for human preference throughout.
+
+We fix four hypotheses and their operational definitions before seeing any judge labels:
+(H1) verbosity and sycophancy are the primary category in more than 60\% of reward-hacking instances;
+(H2) both emerge within the first 20\% of training and then rise monotonically;
+(H3) format gaming appears later and saturates;
+(H4) human preference diverges from the \rmodel score after 40\% of training.
+
+Most of these fail.
+Verbosity plus sycophancy accounts for 49.9\% of reward-hacking instances (95\% CI 45.3--54.3) under the primary judge, and nearly all of that is verbosity: sycophancy is 0.6\%.
+The verbosity share is not even an enrichment, because the same judge assigns verbosity as the primary label to 47.1\% of responses from the \emph{untrained} policy.
+Verbosity does appear by 20\% of training (+22 tokens per response), but it plateaus after 50--60\% rather than rising monotonically, and sycophancy does not emerge on any of three measures.
+Markdown structure is the earliest change, significant at 10\% of training, and it peaks at 50\% and then declines.
+The \rmodel score and judge preference are first detectably divergent at the 40\% checkpoint, which roughly matches H4 in timing, but point estimates fall from 20--30\% and judges never clearly prefer the trained policy.
+The failure mode that most distinguishes reward-hacking instances is one we did not hypothesize: confident fabrication is the primary label on 34.5\% of instances, against 11.5\% of untrained responses.
+
+In summary, we make the following contributions:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We build an end-to-end \rlhf pipeline with dense checkpointing in which one six-category taxonomy, an \rmodel trained on human votes, two LLM judges, and judge-free surface metrics are all applied to the same 10,560 responses.
+    \item We test four pre-specified hypotheses about the composition and timing of reward hacking, and report that the composition hypothesis fails (49.9\% against a 60\% threshold) while the timing hypotheses hold only in part.
+    \item We show that fabrication, not verbosity or sycophancy, is the category enriched among responses that gain reward but lose the judge, and that label base rates can make a category look dominant when it is not enriched.
+    \item We quantify how far LLM-judge taxonomy labels can be trusted: two judges agree on quality (Spearman 0.71) but give estimates of the H1 share that are 30 points apart.
+\end{itemize}
+
+These are results about one small \rlhf setup with an LLM-judge proxy for human preference, not about production \rlhf.
+\Secref{sec:related} positions our work, \secref{sec:method} describes the pipeline and definitions, \secref{sec:results} reports the results, and \secref{sec:discussion} discusses what they do and do not support.

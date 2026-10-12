@@ -1,0 +1,13 @@
+{
+ "val_acc": 0.6933333333333334,
+ "human_prefers_longer": 0.626,
+ "rm_prefers_longer": 0.7113333333333334,
+ "spearman_score_len": 0.46040588466084936,
+ "score_mean": -0.07817614143838485,
+ "score_std": 1.2928274009955032,
+ "n_train": 20000,
+ "steps": 2500,
+ "lr": 0.0001,
+ "batch": 8,
+ "final_train_loss": 0.5913516867160797
+}

@@ -1,0 +1,10 @@
+Reinforcement learning from human feedback (\rlhf) optimizes a language model against a learned reward model (\rmodel), and the policy can raise its reward by exploiting features that the \rmodel over-values.
+These behaviors have been documented separately, but rarely measured on the same training runs with per-category timing.
+We run a small end-to-end \rlhf pipeline: an \rmodel trained on 20,000 human pairwise votes, a 0.5B-parameter policy optimized against it for 160 updates over three seeds, and 11 checkpoints per run.
+We score all 10,560 checkpoint responses with the \rmodel, with judge-free surface metrics, and with two blinded LLM judges that stand in for human raters and apply a six-category taxonomy.
+Most of our four pre-specified hypotheses fail.
+Verbosity and sycophancy together are the primary label on 49.9\% of reward-hacking instances (95\% CI 45.3--54.3), below the hypothesized 60\%, and the verbosity share is no higher than its 47.1\% base rate before training.
+Verbosity appears by 20\% of training but plateaus after 50--60\%; sycophancy never emerges; markdown structure changes first, at 10\%, rather than last.
+The \rmodel score and judge preference detectably diverge at 40\% of training, with no earlier phase in which judges prefer the trained policy.
+The failure mode most enriched among reward-hacking instances is confident fabrication: 34.5\% of instances versus 11.5\% of untrained responses.
+Our judges agree on overall quality (Spearman 0.71) but poorly on most taxonomy labels ($\kappa$ 0.10--0.23 for five of six), so taxonomy shares from LLM judges need human validation before they are trusted.
